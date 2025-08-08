@@ -21,7 +21,7 @@ services:
       - ./dashboard:/app
     working_dir: /app
     ports:
-      - "5801:8501"
+      - "8000:8000"
     depends_on:
       - duckdb
       - ml
