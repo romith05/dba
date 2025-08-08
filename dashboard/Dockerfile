@@ -6,7 +6,8 @@ WORKDIR /app
 
 # Copy Streamlit app
 COPY streamlit.py ./
-
+COPY dsw-2023-mask.tif ./
+COPY historical_wildfire.csv ./
 # Install system dependencies (for rasterio and pyproj)
 RUN apt-get update && apt-get install -y \
     g++ \
