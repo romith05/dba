@@ -36,7 +36,6 @@ map_mode = st.radio("Select Map View:", ["Click Prediction Map", "Historical Hea
 
 if map_mode == "Click Prediction Map":
     left_col, right_col = st.columns([2, 1])
-
     with left_col:
         st.subheader("🗺️ Click to Predict Risk")
 
@@ -63,8 +62,27 @@ if map_mode == "Click Prediction Map":
                 percentage = 0.0
                 is_water = True
             else:
-                percentage = round(random.uniform(0, 1) * 100, 1)
-                is_water = False
+                try:
+                    response = requests.post(
+                        "http://localhost:5000/predict",  # use "localhost" if not Dockerized
+                        json={"lat": lat, "lon": lon},
+                        timeout=15
+                    )
+                    result = response.json()
+                    if "probability" in result:
+                        percentage = result["probability"] * 100  # convert to %
+                        is_water = False
+                        model_output = result
+                    else:
+                        st.warning("Prediction failed. Showing default value.")
+                        percentage = 0.0
+                        is_water = False
+                        model_output = None
+                except Exception as e:
+                    st.error(f"Error contacting model API: {e}")
+                    percentage = 0.0
+                    is_water = False
+                    model_output = None
 
             st.markdown(
                 f"""
@@ -111,7 +129,7 @@ if map_mode == "Click Prediction Map":
 #     )       
 
 # Bottom placeholder section
-base_url = "http://duckdb:9999"
+base_url = "http://localhost:9999"
 def build_query(viz_type, year=None, unit=None):
     if viz_type == "heatmap":
         return """
@@ -129,9 +147,9 @@ def build_query(viz_type, year=None, unit=None):
         """
     elif viz_type == "hist":
         return """
-            SELECT size
+            SELECT size_class
             FROM wildfire
-            WHERE size IS NOT NULL
+            WHERE size_class IS NOT NULL
         """
     elif viz_type == "pie":
         return """
@@ -147,44 +165,68 @@ def build_query(viz_type, year=None, unit=None):
 # Layout
 col1, col2 = st.columns(2)
 col3, col4 = st.columns(2)
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Mapping viz type to its slot
+viz_types = ["heatmap", "bar", "hist", "pie"]
+base_url = "http://duckdb:9999"
+
+# Run all requests concurrently
+def fetch_query(viz_type):
+    try:
+        query = build_query(viz_type)
+        response = requests.post(base_url, data=query, timeout=10)
+        df = pd.read_json(StringIO(response.text), lines=True)
+        return viz_type, df
+    except Exception as e:
+        st.error(f"Error loading {viz_type} visualization: {str(e)}")
+        return viz_type, pd.DataFrame()
+
+# Dictionary to store results
+query_results = {}
+
+with ThreadPoolExecutor(max_workers=4) as executor:
+    futures = {executor.submit(fetch_query, vtype): vtype for vtype in viz_types}
+    for future in as_completed(futures):
+        vtype, df = future.result()
+        query_results[vtype] = df
+# === 1. HEATMAP ===
 # === 1. HEATMAP ===
 with col1:
     st.subheader("🔥 Wildfire Heatmap (Density)")
-    query = build_query("heatmap")
-    response = requests.post(base_url, data=query, timeout=10)
-    df_heat = pd.read_json(StringIO(response.text), lines=True)
-
-    map_center = [54.0, -115.0]
-    m = folium.Map(location=map_center, zoom_start=4, min_zoom=6, max_bounds=True)
-    heat_data = df_heat[['latitude', 'longitude']].dropna().values.tolist()
-    HeatMap(heat_data, radius=10).add_to(m)
-    st_folium(m, width=700, height=700)
+    df_heat = query_results.get("heatmap", pd.DataFrame())
+    if not df_heat.empty:
+        heat_data = df_heat[['latitude', 'longitude']].dropna().values.tolist()
+        m = folium.Map(location=[54.0, -115.0], zoom_start=4, min_zoom=6, max_bounds=True)
+        HeatMap(heat_data, radius=10).add_to(m)
+        st_folium(m, width=700, height=700)
+    else:
+        st.warning("Heatmap data not available.")
 
 # === 2. BAR CHART ===
 with col2:
     st.subheader("📊 Yearly Wildfire Counts")
-    query = build_query("bar")
-    response = requests.post(base_url, data=query, timeout=10)
-    df_yearly = pd.read_json(StringIO(response.text), lines=True)
-    st.bar_chart(df_yearly.set_index("fire_year"))
+    df_yearly = query_results.get("bar", pd.DataFrame())
+    if not df_yearly.empty:
+        st.bar_chart(df_yearly.set_index("fire_year"))
+    else:
+        st.warning("Yearly wildfire data not available.")
 
 # === 3. HISTOGRAM ===
 with col3:
     st.subheader("📏 Distribution of Fire Sizes")
-    query = build_query("hist")
-    response = requests.post(base_url, data=query, timeout=10)
-    df_size = pd.read_json(StringIO(response.text), lines=True)
-    st.plotly_chart(px.histogram(df_size, x="size", nbins=50, title="Histogram of Fire Sizes"))
+    df_size = query_results.get("hist", pd.DataFrame())
+    if not df_size.empty:
+        st.plotly_chart(px.histogram(df_size, x="size_class", nbins=50, title="Histogram of Fire Sizes"))
+    else:
+        st.warning("Size class data not available.")
 
 # === 4. PIE CHART ===
 with col4:
     st.subheader("🧯 Fire Causes")
-    query = build_query("pie")
-    response = requests.post(base_url, data=query, timeout=10)
-    df_cause = pd.read_json(StringIO(response.text), lines=True)
-
+    df_cause = query_results.get("pie", pd.DataFrame())
     if not df_cause.empty:
         st.plotly_chart(px.pie(df_cause, names="general_cause_desc", values="count", title="Fire Causes"))
     else:
-        st.info("No cause data found.")
+        st.warning("Fire cause data not available.")
+
