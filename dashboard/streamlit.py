@@ -116,13 +116,13 @@ def build_query(viz_type, year=None, unit=None):
     if viz_type == "heatmap":
         return """
             SELECT latitude, longitude
-            FROM my_table
+            FROM wildfire
             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
         """
     elif viz_type == "bar":
         return """
             SELECT fire_year, COUNT(*) as count
-            FROM my_table
+            FROM wildfire
             WHERE fire_year IS NOT NULL
             GROUP BY fire_year
             ORDER BY fire_year
@@ -130,13 +130,13 @@ def build_query(viz_type, year=None, unit=None):
     elif viz_type == "hist":
         return """
             SELECT size
-            FROM my_table
+            FROM wildfire
             WHERE size IS NOT NULL
         """
     elif viz_type == "pie":
         return """
             SELECT general_cause_desc, COUNT(*) as count
-            FROM my_table
+            FROM wildfire
             WHERE general_cause_desc IS NOT NULL
             GROUP BY general_cause_desc
             ORDER BY count DESC
