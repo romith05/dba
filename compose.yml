@@ -10,10 +10,14 @@ services:
     ports:
       - "9999:9999"
   ml:
-    build: ./model
+    build:
+      context: ./model
+    volumes:
+      - ./model:/app
+    working_dir: /app
     ports:
       - "5000:5000"
-    
+
   dashboard:
     build:
       context: ./dashboard
@@ -25,3 +29,4 @@ services:
     depends_on:
       - duckdb
       - ml
+
