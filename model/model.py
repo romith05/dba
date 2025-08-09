@@ -16,9 +16,8 @@ def fetch_weather(lat, lon):
     date = pd.Timestamp.now().strftime('%Y-%m-%d')
 
     url = (
-        f"https://archive-api.open-meteo.com/v1/archive"
+        f"https://api.open-meteo.com/v1/forecast"
         f"?latitude={lat}&longitude={lon}"
-        f"&start_date={date}&end_date={date}"
         f"&hourly=temperature_2m,relative_humidity_2m,windspeed_10m"
         f"&timezone=MST"
     )
