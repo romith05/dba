@@ -64,7 +64,7 @@ if map_mode == "Click Prediction Map":
             else:
                 try:
                     response = requests.post(
-                        "http://localhost:5000/predict",  # use "localhost" if not Dockerized
+                        "http://ml:5000/predict",  # use "localhost" if not Dockerized
                         json={"lat": lat, "lon": lon},
                         timeout=15
                     )
