@@ -69,8 +69,7 @@ def predict():
     vegetation_label = knn_label_encoder.inverse_transform([vegetation_type])[0]
 
     if weather is None:
-        #return jsonify({"error": "Weather data unavailable"}), 503
-        weather = { "temperature": 10, "relative_humidity": 0, "wind_speed": 100}
+        return jsonify({"error": "Weather data unavailable"}), 503
     
     # Prepare features for prediction   
     if vegetation_type is None:
