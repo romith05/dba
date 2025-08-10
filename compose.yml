@@ -7,7 +7,7 @@ services:
     working_dir: /app
     volumes:
       - ./db:/app
-      - /home/ubuntu/s3:/data:ro
+      - /s3:/data:ro
     ports:
       - "9999:9999"
 
@@ -17,7 +17,7 @@ services:
     working_dir: /app
     volumes:
       - ./model:/app
-      - /home/ubuntu/s3:/data:ro
+      - /s3:/data:ro
     expose:
       - "5000"            # internal only (no public port)
 
@@ -27,7 +27,7 @@ services:
     working_dir: /app
     volumes:
       - ./dashboard:/app
-      - /home/ubuntu/s3:/data:ro
+      - /s3:/data:ro
     ports:
       - "8000:8000"
     depends_on:
