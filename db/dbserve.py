@@ -10,7 +10,7 @@ def main():
     con.load_extension("httpserver")
 
     # Parquet file as a table
-    con.execute("CREATE TABLE wildfire AS SELECT * FROM 'wildfire_data.parquet';")
+    con.execute("CREATE TABLE wildfire AS SELECT * FROM '/data/wildfire_data.parquet';")
 
     # Start  DuckDB HTTP server
     os.environ['DUCKDB_HTTPSERVER_FOREGROUND'] = '1'
