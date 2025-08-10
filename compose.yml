@@ -1,32 +1,35 @@
-version: '3.9'
+version: "3.9"
 
 services:
   duckdb:
     build:
       context: ./db
+    working_dir: /app
     volumes:
       - ./db:/app
-    working_dir: /app
+      - /home/ubuntu/s3:/data:ro
     ports:
       - "9999:9999"
+
   ml:
     build:
       context: ./model
+    working_dir: /app
     volumes:
       - ./model:/app
-    working_dir: /app
-    ports:
-      - "5000:5000"
+      - /home/ubuntu/s3:/data:ro
+    expose:
+      - "5000"            # internal only (no public port)
 
   dashboard:
     build:
       context: ./dashboard
+    working_dir: /app
     volumes:
       - ./dashboard:/app
-    working_dir: /app
+      - /home/ubuntu/s3:/data:ro
     ports:
       - "8000:8000"
     depends_on:
       - duckdb
       - ml
-
