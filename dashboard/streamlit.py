@@ -58,7 +58,7 @@ if map_mode == "Click Prediction Map":
 
             st.markdown(f"**Selected Location:** `{lat:.4f}, {lon:.4f}`")
 
-            if is_water_body(lat, lon,"dsw-2023-mask.tif"):
+            if is_water_body(lat, lon,"/data/dsw-2023-mask.tif"):
                 percentage = 0.0
                 is_water = True
             else:
