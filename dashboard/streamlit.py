@@ -231,16 +231,16 @@ with col3:
         df_size['size_class'] = pd.Categorical(df_size['size_class'], categories=class_order, ordered=True)
         df_size = df_size.sort_values('size_class')
 
-        fig = px.histogram(df_size, 
-                           x="size_class", 
-                           nbins=50, 
-                           title="Histogram of Fire Sizes")
+        fig = px.histogram(
+            df_size, 
+            x="size_description",  # use the descriptive labels directly
+            nbins=50, 
+            title="Histogram of Fire Sizes")
 
-        # Set custom_data and hovertemplate to display the size description
         fig.update_traces(
-            customdata=df_size[['size_description']],
-            hovertemplate='<b>%{customdata[0]}</b><br>Count: %{y}<extra></extra>'
+            hovertemplate='<b>%{x}</b><br>Count: %{y}<extra></extra>'
         )
+
 
         st.plotly_chart(fig)
     else:
