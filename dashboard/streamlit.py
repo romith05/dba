@@ -217,7 +217,26 @@ with col3:
     st.subheader("📏 Distribution of Fire Sizes")
     df_size = query_results.get("hist", pd.DataFrame())
     if not df_size.empty:
-        st.plotly_chart(px.histogram(df_size, x="size_class", nbins=50, title="Histogram of Fire Sizes"))
+        # Step 1: Create a mapping dictionary for the size classes
+        size_class_mapping = {
+            'A': 'A class = 0 to 0.1 ha',
+            'B': 'B class > 0.1 ha to 4.0 ha',
+            'C': 'C class > 4.0 ha to 40.0 ha',
+            'D': 'D class > 40.0 ha to 200 ha',
+            'E': 'E class > 200 ha'
+        }
+        
+        # Step 2: Add a new column with the full description
+        df_size['size_description'] = df_size['size_class'].map(size_class_mapping)
+
+        # Step 3: Use the new column in the hover_data parameter
+        fig = px.histogram(df_size, 
+                           x="size_class", 
+                           nbins=50, 
+                           title="Histogram of Fire Sizes",
+                           hover_data={'size_description': True}) # Show description on hover
+        
+        st.plotly_chart(fig)
     else:
         st.warning("Size class data not available.")
 
