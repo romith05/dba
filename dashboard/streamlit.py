@@ -129,7 +129,7 @@ if map_mode == "Click Prediction Map":
 #     )       
 
 # Bottom placeholder section
-base_url = "http://localhost:9999"
+
 def build_query(viz_type, year=None, unit=None):
     if viz_type == "heatmap":
         return """
